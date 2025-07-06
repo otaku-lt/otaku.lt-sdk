@@ -227,7 +227,36 @@ Automatic deployment is configured via `.github/workflows/deploy.yml`:
 
 - **Pull Requests**: Deploy to preview environment
 - **Main Branch**: Deploy to production  
-- **Required Secrets**: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
+
+### **🔐 Automated Secrets Management**
+
+The required GitHub Actions secrets are automatically managed by Terraform:
+
+```bash
+# Setup GitHub Actions secrets for CI/CD
+make github-secrets
+```
+
+This creates the following repository secrets:
+- `CLOUDFLARE_API_TOKEN` - Your Cloudflare API token
+- `CLOUDFLARE_ACCOUNT_ID` - Your Cloudflare account ID
+
+### **🚀 Complete CI/CD Setup**
+
+```bash
+# Full automated setup
+gh auth login              # Authenticate with GitHub
+wrangler login             # Authenticate with Cloudflare  
+make cf-extract            # Extract credentials
+make workers-setup         # Setup infrastructure
+make github-secrets        # Configure CI/CD secrets
+make workers-apply         # Deploy everything
+```
+
+After this setup, your CI/CD pipeline will automatically:
+- Deploy previews for pull requests
+- Deploy to production when merging to main
+- Comment on PRs with preview URLs
 
 ## Getting Cloudflare Values
 

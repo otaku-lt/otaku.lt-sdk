@@ -45,3 +45,16 @@ resource "github_repository" "otaku_lt_sdk" {
   # Topics/tags for the repository
   topics = ["terraform", "infrastructure", "github", "iac"]
 }
+
+# GitHub repository secrets for Cloudflare deployment
+resource "github_actions_secret" "cloudflare_api_token" {
+  repository      = github_repository.otaku_lt.name
+  secret_name     = "CLOUDFLARE_API_TOKEN"
+  plaintext_value = var.cloudflare_api_token
+}
+
+resource "github_actions_secret" "cloudflare_account_id" {
+  repository      = github_repository.otaku_lt.name
+  secret_name     = "CLOUDFLARE_ACCOUNT_ID"
+  plaintext_value = var.cloudflare_account_id
+}

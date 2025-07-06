@@ -14,7 +14,7 @@ NC := \033[0m # No Color
 include cloudflare.mk
 include workers.mk
 
-.PHONY: setup check-deps check-auth check-cf-auth env plan apply fmt validate clean set-zone-id shell-env help
+.PHONY: setup check-deps check-auth check-cf-auth env plan apply fmt validate clean set-zone-id shell-env github-secrets help github-secrets
 
 # Default target: setup environment
 setup: check-deps check-auth check-cf-auth env
@@ -177,6 +177,32 @@ set-zone-id:
 	@echo "$(BLUE)💡 Zone ID set to: $(ZONE_ID)$(NC)"
 	@echo "$(BLUE)🚀 Ready to run: make plan$(NC)"
 
+# Setup GitHub Actions secrets for CI/CD
+github-secrets: setup
+	@echo "$(YELLOW)🔐 Setting up GitHub Actions secrets...$(NC)"
+	@echo ""
+	@if [ ! -f .env ]; then \
+		echo "$(RED)❌ .env file not found$(NC)"; \
+		echo "$(YELLOW)Run 'make cf-extract' first to extract credentials$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(BLUE)💡 This will configure GitHub repository secrets for CI/CD$(NC)"
+	@echo "$(YELLOW)Secrets to be created:$(NC)"
+	@echo "  - CLOUDFLARE_API_TOKEN"
+	@echo "  - CLOUDFLARE_ACCOUNT_ID"
+	@echo ""
+	@. ./.env && export GITHUB_TOKEN="$$(gh auth token)" && export GITHUB_OWNER="otaku-lt" && \
+		export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_OAUTH_TOKEN" && \
+		export TF_VAR_cloudflare_api_token="$$CLOUDFLARE_OAUTH_TOKEN" && \
+		export TF_VAR_cloudflare_account_id="$$CLOUDFLARE_ACCOUNT_ID" && \
+		export TF_VAR_cloudflare_zone_id="$$CLOUDFLARE_ZONE_ID" && \
+		export TF_VAR_domain_name="$$DOMAIN_NAME" && \
+		export TF_VAR_pages_project_name="$$PAGES_PROJECT_NAME" && \
+		terraform apply -target=github_actions_secret.cloudflare_api_token -target=github_actions_secret.cloudflare_account_id
+	@echo ""
+	@echo "$(GREEN)🎉 GitHub Actions secrets configured!$(NC)"
+	@echo "$(BLUE)🚀 Your CI/CD pipeline is now ready to deploy automatically$(NC)"
+
 # Show help
 help:
 	@echo "$(GREEN)otaku.lt-sdk Terraform + Cloudflare Workers Project$(NC)"
@@ -191,6 +217,7 @@ help:
 	@echo "  cf-check-github - Check GitHub App installation status (legacy)"
 	@echo "  cf-info      - Show Cloudflare account information from .env"
 	@echo "  cf-auto-setup - Extract credentials and run terraform plan"
+	@echo "  github-secrets - Setup GitHub Actions secrets for CI/CD"
 	@echo "  init         - Initialize Terraform"
 	@echo "  plan         - Run terraform plan (uses .env for credentials)"
 	@echo "  apply        - Run terraform apply (uses .env for credentials)"
@@ -219,6 +246,7 @@ help:
 	@echo "  wrangler login                   # Authenticate with Cloudflare"
 	@echo "  make cf-extract                  # Extract credentials to .env"
 	@echo "  make workers-setup               # Setup infrastructure"
+	@echo "  make github-secrets              # Setup GitHub Actions secrets"
 	@echo "  make workers-apply               # Deploy everything"
 	@echo ""
 	@echo "$(YELLOW)🏗️  Infrastructure Only:$(NC)"
