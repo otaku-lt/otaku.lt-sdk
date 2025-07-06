@@ -3,6 +3,9 @@
 *.tfstate.*
 *.tfstate.backup
 
+# Environment variables - CONTAINS SENSITIVE DATA!
+.env
+
 # Crash log files
 crash.log
 crash.*.log
@@ -32,11 +35,6 @@ terraform.rc
 
 # .tflock files
 .terraform.lock.hcl
-
-# Environment variables file
-.env
-.env.local
-.env.*.local
 
 # Backup files
 *.backup

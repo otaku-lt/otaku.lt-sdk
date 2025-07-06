@@ -30,3 +30,35 @@ variable "default_branch" {
   type        = string
   default     = "main"
 }
+
+# Cloudflare configuration variables
+variable "cloudflare_api_token" {
+  description = "Cloudflare API token"
+  type        = string
+  sensitive   = true
+  default     = null
+}
+
+variable "cloudflare_account_id" {
+  description = "Cloudflare account ID"
+  type        = string
+  default     = null
+}
+
+variable "cloudflare_zone_id" {
+  description = "Cloudflare zone ID for the domain"
+  type        = string
+  default     = null
+}
+
+variable "domain_name" {
+  description = "Domain name for the website"
+  type        = string
+  default     = "otaku.lt"
+}
+
+variable "pages_project_name" {
+  description = "Name of the Cloudflare Pages project"
+  type        = string
+  default     = "otaku-lt"
+}

@@ -19,3 +19,20 @@
 # otaku_lt_repo_name = "otaku.lt"
 # otaku_lt_sdk_repo_name = "otaku.lt-sdk"
 # default_branch = "main"
+
+# Cloudflare Configuration
+# You can either provide these values or set them as environment variables:
+# export CLOUDFLARE_API_TOKEN="your_cloudflare_api_token"
+
+# Option 1: Provide Cloudflare API token directly (not recommended for security)
+# cloudflare_api_token = "your_cloudflare_api_token_here"
+
+# Required: Cloudflare Account ID (get from Cloudflare dashboard)
+cloudflare_account_id = "your_cloudflare_account_id"
+
+# Required: Cloudflare Zone ID for your domain (get from Cloudflare dashboard) 
+cloudflare_zone_id = "your_cloudflare_zone_id"
+
+# Domain configuration (optional, defaults are provided)
+# domain_name = "otaku.lt"
+# pages_project_name = "otaku-lt"

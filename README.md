@@ -1,13 +1,14 @@
 # otaku.lt-sdk
 
-Infrastructure as Code for the otaku.lt project using Terraform and GitHub provider.
+Infrastructure as Code for the otaku.lt project using Terraform with GitHub and Cloudflare providers.
 
 ## Structure
 
-- `providers.tf` - Terraform and GitHub provider configuration
+- `providers.tf` - Terraform, GitHub, and Cloudflare provider configuration
 - `variables.tf` - Input variables for configuration
 - `main.tf` - Main configuration entry point
 - `github.tf` - GitHub repository resources
+- `cloudflare.tf` - Cloudflare Pages and DNS resources
 - `outputs.tf` - Output values
 - `Makefile` - Project automation and environment setup
 - `terraform.tfvars.example` - Example variables file
@@ -23,6 +24,14 @@ Infrastructure as Code for the otaku.lt project using Terraform and GitHub provi
 2. **Install GitHub CLI** and authenticate:
    ```bash
    gh auth login
+   ```
+
+3. **Get Cloudflare API Token** from [Cloudflare Dashboard](https://dash.cloudflare.com/profile/api-tokens)
+   - Create a token with permissions: Zone:Read, Page:Edit
+
+4. **Set Cloudflare environment variable**:
+   ```bash
+   export CLOUDFLARE_API_TOKEN="your_cloudflare_api_token"
    ```
 
 ## Quick Start
@@ -68,6 +77,7 @@ make
 ```bash
 export GITHUB_TOKEN="$(gh auth token)"
 export GITHUB_OWNER="otaku-lt"
+export CLOUDFLARE_API_TOKEN="your_cloudflare_api_token"
 ```
 
 ### Persistent Setup:
@@ -76,28 +86,44 @@ export GITHUB_OWNER="otaku-lt"
 make shell-env
 ```
 
-1. **Clone this repository** (if not already done):
-   ```bash
-   git clone <your-repo-url>
-   cd otaku.lt-sdk
-   ```
+## Configuration
 
-2. **Copy and configure variables**:
+1. **Copy and configure variables**:
    ```bash
    cp terraform.tfvars.example terraform.tfvars
    ```
    
-   Edit `terraform.tfvars` and fill in your GitHub token and username/organization.
-
-3. **Initialize Terraform**:
-   ```bash
-   terraform init
+2. **Edit `terraform.tfvars`** and fill in required values:
+   ```hcl
+   # Required Cloudflare values
+   cloudflare_account_id = "your_cloudflare_account_id"
+   cloudflare_zone_id = "your_cloudflare_zone_id"
+   
+   # Optional overrides
+   domain_name = "otaku.lt"
+   pages_project_name = "otaku-lt"
    ```
 
-4. **Plan the deployment**:
-   ```bash
-   terraform plan
-   ```
+## Resources Managed
+
+This Terraform configuration manages:
+
+### GitHub Resources:
+- **otaku.lt**: Main website repository (Next.js application)
+- **otaku.lt-sdk**: Infrastructure as Code repository (this repository)
+
+### Cloudflare Resources:
+- **Pages Project**: Automated deployment from GitHub
+- **Custom Domain**: DNS configuration for otaku.lt
+- **SSL/TLS**: Security and performance settings
+- **Page Rules**: WWW redirect and optimization
+
+## Deployment Flow
+
+1. **Code Push** → GitHub repository (otaku.lt)
+2. **Auto Build** → Cloudflare Pages builds Next.js app
+3. **Auto Deploy** → Live at https://otaku.lt
+4. **DNS Management** → Terraform manages domain configuration
 
 5. **Apply the configuration**:
    ```bash
@@ -116,16 +142,26 @@ This Terraform configuration manages the following repositories:
 Instead of using `terraform.tfvars`, you can also use environment variables:
 
 ```bash
-export TF_VAR_github_token="your_github_token"
-export TF_VAR_github_owner="your_github_username"
+# GitHub (handled automatically by Makefile)
+export GITHUB_TOKEN="$(gh auth token)"
+export GITHUB_OWNER="otaku-lt"
+
+# Cloudflare (required)
+export CLOUDFLARE_API_TOKEN="your_cloudflare_api_token"
+
+# Or use Terraform variable format
+export TF_VAR_cloudflare_account_id="your_account_id"
+export TF_VAR_cloudflare_zone_id="your_zone_id"
 ```
 
-Or set the GitHub provider environment variables directly:
+## Getting Cloudflare Values
 
-```bash
-export GITHUB_TOKEN="your_github_token"
-export GITHUB_OWNER="your_github_username"
-```
+1. **Account ID**: Cloudflare Dashboard → Right sidebar
+2. **Zone ID**: Cloudflare Dashboard → Your domain → Right sidebar  
+3. **API Token**: Cloudflare Dashboard → My Profile → API Tokens → Create Token
+   - Use "Custom token" template
+   - Permissions: `Zone:Read`, `Page:Edit`
+   - Zone Resources: Include your domain
 
 ## Importing Existing Repositories
 
