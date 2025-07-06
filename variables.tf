@@ -9,7 +9,7 @@ variable "github_token" {
 variable "github_owner" {
   description = "GitHub username or organization name"
   type        = string
-  default     = null
+  default     = "otaku-lt"
 }
 
 # Repository configuration variables
