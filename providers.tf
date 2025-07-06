@@ -1,6 +1,6 @@
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     github = {
       source  = "integrations/github"
@@ -20,6 +20,7 @@ provider "github" {
 }
 
 provider "cloudflare" {
-  # Use environment variables instead of hardcoded values
+  # Use environment variables for authentication
   # Set: export CLOUDFLARE_API_TOKEN="your_api_token"
+  # Or authenticate with: wrangler login (and set token manually)
 }
