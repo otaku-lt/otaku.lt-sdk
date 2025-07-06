@@ -1,0 +1,21 @@
+# Example terraform.tfvars file
+# Copy this file to terraform.tfvars and fill in your values
+
+# GitHub Configuration
+# You can either provide these values or let Terraform get them from gh CLI
+
+# Option 1: Provide GitHub token directly (not recommended for security)
+# github_token = "ghp_your_github_token_here"
+
+# Option 2: Provide GitHub owner/username directly  
+# github_owner = "your_github_username"
+
+# If you don't provide these values, Terraform will automatically:
+# - Get the token from: gh auth token
+# - Get the owner from: gh api user
+# Make sure you're logged in with: gh auth login
+
+# Repository names (optional, defaults are provided)
+# otaku_lt_repo_name = "otaku.lt"
+# otaku_lt_sdk_repo_name = "otaku.lt-sdk"
+# default_branch = "main"
