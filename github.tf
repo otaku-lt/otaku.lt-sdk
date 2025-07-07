@@ -47,8 +47,8 @@ resource "github_repository" "otaku_lt_sdk" {
 }
 
 # Events API repository - Python Workers
-resource "github_repository" "otaku_events_api" {
-  name        = "otaku-events-api"
+resource "github_repository" "otaku_lt_api_events" {
+  name        = "otaku.lt-api-events"
   description = "Python-based events API using Cloudflare Workers and FastAPI"
 
   visibility = "public"
@@ -83,14 +83,14 @@ resource "github_repository" "otaku_events_api" {
 }
 
 # Set default branch for events API repository
-resource "github_branch_default" "otaku_events_api_default" {
-  repository = github_repository.otaku_events_api.name
+resource "github_branch_default" "otaku_lt_api_events_default" {
+  repository = github_repository.otaku_lt_api_events.name
   branch     = "main"
 }
 
 # Branch protection for events API repository
-resource "github_branch_protection" "otaku_events_api_main" {
-  repository_id = github_repository.otaku_events_api.name
+resource "github_branch_protection" "otaku_lt_api_events_main" {
+  repository_id = github_repository.otaku_lt_api_events.name
   pattern       = "main"
 
   # Require pull request reviews

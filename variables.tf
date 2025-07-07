@@ -25,10 +25,10 @@ variable "otaku_lt_sdk_repo_name" {
   default     = "otaku.lt-sdk"
 }
 
-variable "otaku_events_api_repo_name" {
-  description = "Name of the otaku-events-api repository"
+variable "otaku_lt_api_events_repo_name" {
+  description = "Name of the otaku.lt-api-events repository"
   type        = string
-  default     = "otaku-events-api"
+  default     = "otaku.lt-api-events"
 }
 
 variable "default_branch" {

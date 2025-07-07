@@ -52,7 +52,7 @@ resource "cloudflare_zone_settings_override" "otaku_lt_settings" {
 }
 
 # DNS record for events API subdomain
-resource "cloudflare_record" "otaku_events_api" {
+resource "cloudflare_record" "otaku_lt_api_events" {
   zone_id = var.cloudflare_zone_id
   name    = "api"
   content = "192.0.2.1"  # Placeholder IP, will be handled by Worker
@@ -64,19 +64,19 @@ resource "cloudflare_record" "otaku_events_api" {
 }
 
 # D1 Database for events storage
-resource "cloudflare_d1_database" "otaku_events_db" {
+resource "cloudflare_d1_database" "otaku_lt_api_events_db" {
   account_id = var.cloudflare_account_id
   name       = "otaku-events-db"
 }
 
 # KV Namespace for caching and rate limiting
-resource "cloudflare_workers_kv_namespace" "otaku_events_cache" {
+resource "cloudflare_workers_kv_namespace" "otaku_lt_api_events_cache" {
   account_id = var.cloudflare_account_id
   title      = "otaku-events-cache"
 }
 
 # KV Namespace for API rate limiting
-resource "cloudflare_workers_kv_namespace" "otaku_events_rate_limit" {
+resource "cloudflare_workers_kv_namespace" "otaku_lt_api_events_rate_limit" {
   account_id = var.cloudflare_account_id
   title      = "otaku-events-rate-limit"
 }

@@ -219,7 +219,7 @@ help:
 	@echo ""
 	@echo "$(BLUE)📦 This creates everything automatically:$(NC)"
 	@echo "  • Organization-level GitHub secrets"
-	@echo "  • otaku-events-api repository with security features"
+	@echo "  • otaku.lt-api-events repository with security features"
 	@echo "  • D1 database for events storage"
 	@echo "  • KV namespaces for caching and rate limiting"
 	@echo "  • DNS record for api.otaku.lt"
