@@ -14,10 +14,10 @@ NC := \033[0m # No Color
 include cloudflare.mk
 include workers.mk
 
-.PHONY: setup check-deps check-auth check-cf-auth env plan apply fmt validate clean set-zone-id shell-env help debug-env debug-env-simple
+.PHONY: setup check-deps check-gh-auth check-cf-auth env plan apply fmt validate clean set-zone-id shell-env help debug-env debug-env-simple
 
 # Default target: setup environment
-setup: check-deps check-auth check-cf-auth env
+setup: check-deps check-gh-auth check-cf-auth env
 	@echo "$(GREEN)🚀 Environment setup complete!$(NC)"
 	@echo ""
 	@echo "$(YELLOW)Available commands:$(NC)"
@@ -36,7 +36,7 @@ check-deps:
 	@echo "$(GREEN)✅ Dependencies installed$(NC)"
 
 # Check GitHub authentication
-check-auth:
+check-gh-auth:
 	@echo "$(YELLOW)🔐 Checking GitHub authentication...$(NC)"
 	@gh auth status >/dev/null 2>&1 || { echo "$(RED)❌ Not authenticated with GitHub CLI$(NC)"; echo "   Run: gh auth login"; exit 1; }
 	@echo "$(GREEN)✅ GitHub authentication verified$(NC)"
@@ -61,7 +61,7 @@ check-cf-auth:
 	fi
 
 # Set up environment variables
-env: check-auth check-cf-auth
+env: check-gh-auth check-cf-auth
 	@echo "$(YELLOW)🌍 Setting up environment variables...$(NC)"
 	$(eval export GITHUB_TOKEN=$(shell gh auth token))
 	$(eval export GITHUB_OWNER=otaku-lt)
