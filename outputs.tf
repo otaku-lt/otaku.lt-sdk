@@ -40,7 +40,7 @@ output "otaku_lt_api_events_repository_url" {
 
 output "otaku_lt_api_events_repository_clone_url" {
   description = "The clone URL of the otaku.lt-api-events repository"
-  value       = github_repository.otaku_lt_api_events.clone_url
+  value       = github_repository.otaku_lt_api_events.http_clone_url
 }
 
 output "otaku_lt_api_events_repository_ssh_clone_url" {
@@ -61,8 +61,8 @@ output "website_url" {
 
 # Cloudflare Workers outputs
 output "workers_domain" {
-  description = "Custom domain for Cloudflare Workers"
-  value       = cloudflare_record.workers_cname.hostname
+  description = "Main domain for Cloudflare Workers"
+  value       = cloudflare_record.otaku_lt_root.hostname
 }
 
 # Events API Workers outputs
