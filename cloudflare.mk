@@ -112,6 +112,7 @@ cf-import-dns:
 	fi
 	@. ./.env && export GITHUB_TOKEN="$$(gh auth token)" && export GITHUB_OWNER="otaku-lt" && \
 		export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_API_TOKEN" && \
+		export TF_VAR_cloudflare_api_token="$$CLOUDFLARE_API_TOKEN" && \
 		export TF_VAR_cloudflare_account_id="$$CLOUDFLARE_ACCOUNT_ID" && \
 		export TF_VAR_cloudflare_zone_id="$$CLOUDFLARE_ZONE_ID" && \
 		export TF_VAR_domain_name="$$DOMAIN_NAME" && \
@@ -179,6 +180,7 @@ cf-auto-setup: setup
 	@echo "$(YELLOW)📋 Running Terraform plan...$(NC)"
 	@. ./.env && export GITHUB_TOKEN="$$(gh auth token)" && export GITHUB_OWNER="otaku-lt" && \
 		export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_API_TOKEN" && \
+		export TF_VAR_cloudflare_api_token="$$CLOUDFLARE_API_TOKEN" && \
 		export TF_VAR_cloudflare_account_id="$$CLOUDFLARE_ACCOUNT_ID" && \
 		export TF_VAR_cloudflare_zone_id="$$CLOUDFLARE_ZONE_ID" && \
 		export TF_VAR_domain_name="$$DOMAIN_NAME" && \

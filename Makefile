@@ -14,7 +14,7 @@ NC := \033[0m # No Color
 include cloudflare.mk
 include workers.mk
 
-.PHONY: setup check-deps check-auth check-cf-auth env plan apply fmt validate clean set-zone-id shell-env help
+.PHONY: setup check-deps check-auth check-cf-auth env plan apply fmt validate clean set-zone-id shell-env help debug-env debug-env-simple
 
 # Default target: setup environment
 setup: check-deps check-auth check-cf-auth env
@@ -84,13 +84,42 @@ init: setup
 plan: setup
 	@echo "$(YELLOW)📋 Running Terraform plan...$(NC)"
 	@if [ -f .env ]; then \
-		. ./.env && export GITHUB_TOKEN="$$(gh auth token)" && export GITHUB_OWNER="otaku-lt" && \
-			export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_API_TOKEN" && \
-			export TF_VAR_cloudflare_account_id="$$CLOUDFLARE_ACCOUNT_ID" && \
-			export TF_VAR_cloudflare_zone_id="$$CLOUDFLARE_ZONE_ID" && \
-			export TF_VAR_domain_name="$$DOMAIN_NAME" && \
-			export TF_VAR_pages_project_name="$$PAGES_PROJECT_NAME" && \
-			terraform plan; \
+		echo "$(BLUE)🔧 Loading environment variables from .env...$(NC)"; \
+		. ./.env && \
+		export GITHUB_TOKEN="$$(gh auth token)" && \
+		export GITHUB_OWNER="otaku-lt" && \
+		export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_API_TOKEN" && \
+		export TF_VAR_cloudflare_api_token="$$CLOUDFLARE_API_TOKEN" && \
+		export TF_VAR_cloudflare_account_id="$$CLOUDFLARE_ACCOUNT_ID" && \
+		export TF_VAR_cloudflare_zone_id="$$CLOUDFLARE_ZONE_ID" && \
+		export TF_VAR_domain_name="$$DOMAIN_NAME" && \
+		export TF_VAR_pages_project_name="$$PAGES_PROJECT_NAME" && \
+		echo "$(GREEN)✅ Environment loaded$(NC)" && \
+		echo "$(BLUE)🚀 Running: terraform plan$(NC)" && \
+		terraform plan; \
+	else \
+		echo "$(RED)❌ .env file not found$(NC)"; \
+		echo "$(YELLOW)Run 'make cf-set-token TOKEN=xyz' first to set up credentials$(NC)"; \
+		exit 1; \
+	fi
+
+# Quick terraform plan without setup checks
+plan-quick:
+	@echo "$(YELLOW)📋 Running Terraform plan (quick)...$(NC)"
+	@if [ -f .env ]; then \
+		echo "$(BLUE)🔧 Loading environment variables from .env...$(NC)"; \
+		. ./.env && \
+		export GITHUB_TOKEN="$$(gh auth token)" && \
+		export GITHUB_OWNER="otaku-lt" && \
+		export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_API_TOKEN" && \
+		export TF_VAR_cloudflare_api_token="$$CLOUDFLARE_API_TOKEN" && \
+		export TF_VAR_cloudflare_account_id="$$CLOUDFLARE_ACCOUNT_ID" && \
+		export TF_VAR_cloudflare_zone_id="$$CLOUDFLARE_ZONE_ID" && \
+		export TF_VAR_domain_name="$$DOMAIN_NAME" && \
+		export TF_VAR_pages_project_name="$$PAGES_PROJECT_NAME" && \
+		echo "$(GREEN)✅ Environment loaded$(NC)" && \
+		echo "$(BLUE)🚀 Running: terraform plan$(NC)" && \
+		terraform plan; \
 	else \
 		echo "$(RED)❌ .env file not found$(NC)"; \
 		echo "$(YELLOW)Run 'make cf-set-token TOKEN=xyz' first to set up credentials$(NC)"; \
@@ -101,13 +130,19 @@ plan: setup
 apply: setup
 	@echo "$(YELLOW)🚀 Applying Terraform configuration...$(NC)"
 	@if [ -f .env ]; then \
-		. ./.env && export GITHUB_TOKEN="$$(gh auth token)" && export GITHUB_OWNER="otaku-lt" && \
-			export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_API_TOKEN" && \
-			export TF_VAR_cloudflare_account_id="$$CLOUDFLARE_ACCOUNT_ID" && \
-			export TF_VAR_cloudflare_zone_id="$$CLOUDFLARE_ZONE_ID" && \
-			export TF_VAR_domain_name="$$DOMAIN_NAME" && \
-			export TF_VAR_pages_project_name="$$PAGES_PROJECT_NAME" && \
-			terraform apply; \
+		echo "$(BLUE)🔧 Loading environment variables from .env...$(NC)"; \
+		. ./.env && \
+		export GITHUB_TOKEN="$$(gh auth token)" && \
+		export GITHUB_OWNER="otaku-lt" && \
+		export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_API_TOKEN" && \
+		export TF_VAR_cloudflare_api_token="$$CLOUDFLARE_API_TOKEN" && \
+		export TF_VAR_cloudflare_account_id="$$CLOUDFLARE_ACCOUNT_ID" && \
+		export TF_VAR_cloudflare_zone_id="$$CLOUDFLARE_ZONE_ID" && \
+		export TF_VAR_domain_name="$$DOMAIN_NAME" && \
+		export TF_VAR_pages_project_name="$$PAGES_PROJECT_NAME" && \
+		echo "$(GREEN)✅ Environment loaded$(NC)" && \
+		echo "$(BLUE)🚀 Running: terraform apply$(NC)" && \
+		terraform apply; \
 	else \
 		echo "$(RED)❌ .env file not found$(NC)"; \
 		echo "$(YELLOW)Run 'make cf-set-token TOKEN=xyz' first to set up credentials$(NC)"; \
@@ -179,6 +214,68 @@ set-zone-id:
 	fi
 	@echo "$(BLUE)💡 Zone ID set to: $(ZONE_ID)$(NC)"
 	@echo "$(BLUE)🚀 Ready to run: make plan$(NC)"
+
+# Debug target to show environment variables
+debug-env: setup
+	@echo "$(YELLOW)🔍 Debugging environment variables...$(NC)"
+	@if [ -f .env ]; then \
+		echo "$(BLUE)📄 Contents of .env file:$(NC)"; \
+		cat .env; \
+		echo ""; \
+		echo "$(BLUE)🔧 Loaded environment variables:$(NC)"; \
+		. ./.env && \
+		export GITHUB_TOKEN="$$(gh auth token)" && \
+		export GITHUB_OWNER="otaku-lt" && \
+		export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_API_TOKEN" && \
+		export TF_VAR_cloudflare_api_token="$$CLOUDFLARE_API_TOKEN" && \
+		export TF_VAR_cloudflare_account_id="$$CLOUDFLARE_ACCOUNT_ID" && \
+		export TF_VAR_cloudflare_zone_id="$$CLOUDFLARE_ZONE_ID" && \
+		export TF_VAR_domain_name="$$DOMAIN_NAME" && \
+		export TF_VAR_pages_project_name="$$PAGES_PROJECT_NAME" && \
+		echo "GITHUB_TOKEN: $${GITHUB_TOKEN:0:10}..." && \
+		echo "GITHUB_OWNER: $$GITHUB_OWNER" && \
+		echo "CLOUDFLARE_API_TOKEN: $${CLOUDFLARE_API_TOKEN:0:10}..." && \
+		echo "TF_VAR_cloudflare_api_token: $${TF_VAR_cloudflare_api_token:0:10}..." && \
+		echo "TF_VAR_cloudflare_account_id: $$TF_VAR_cloudflare_account_id" && \
+		echo "TF_VAR_cloudflare_zone_id: $$TF_VAR_cloudflare_zone_id" && \
+		echo "TF_VAR_domain_name: $$TF_VAR_domain_name" && \
+		echo "TF_VAR_pages_project_name: $$TF_VAR_pages_project_name"; \
+	else \
+		echo "$(RED)❌ .env file not found$(NC)"; \
+		echo "$(YELLOW)Run 'make cf-set-token TOKEN=xyz' first to set up credentials$(NC)"; \
+		exit 1; \
+	fi
+
+# Simple debug target without setup dependencies  
+debug-env-simple:
+	@echo "$(YELLOW)🔍 Debugging environment variables...$(NC)"
+	@if [ -f .env ]; then \
+		echo "$(BLUE)📄 Contents of .env file:$(NC)"; \
+		cat .env; \
+		echo ""; \
+		echo "$(BLUE)🔧 Loaded environment variables:$(NC)"; \
+		. ./.env && \
+		export GITHUB_TOKEN="$$(gh auth token)" && \
+		export GITHUB_OWNER="otaku-lt" && \
+		export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_API_TOKEN" && \
+		export TF_VAR_cloudflare_api_token="$$CLOUDFLARE_API_TOKEN" && \
+		export TF_VAR_cloudflare_account_id="$$CLOUDFLARE_ACCOUNT_ID" && \
+		export TF_VAR_cloudflare_zone_id="$$CLOUDFLARE_ZONE_ID" && \
+		export TF_VAR_domain_name="$$DOMAIN_NAME" && \
+		export TF_VAR_pages_project_name="$$PAGES_PROJECT_NAME" && \
+		echo "GITHUB_TOKEN: $${GITHUB_TOKEN:0:10}..." && \
+		echo "GITHUB_OWNER: $$GITHUB_OWNER" && \
+		echo "CLOUDFLARE_API_TOKEN: $${CLOUDFLARE_API_TOKEN:0:10}..." && \
+		echo "TF_VAR_cloudflare_api_token: $${TF_VAR_cloudflare_api_token:0:10}..." && \
+		echo "TF_VAR_cloudflare_account_id: $$TF_VAR_cloudflare_account_id" && \
+		echo "TF_VAR_cloudflare_zone_id: $$TF_VAR_cloudflare_zone_id" && \
+		echo "TF_VAR_domain_name: $$TF_VAR_domain_name" && \
+		echo "TF_VAR_pages_project_name: $$TF_VAR_pages_project_name"; \
+	else \
+		echo "$(RED)❌ .env file not found$(NC)"; \
+		echo "$(YELLOW)Run 'make cf-set-token TOKEN=xyz' first to set up credentials$(NC)"; \
+		exit 1; \
+	fi
 
 # Events API specific commands
 .PHONY: events-config events-migrate events-migrate-dev events-deploy events-deploy-dev events-dev events-logs
@@ -284,6 +381,8 @@ help:
 	@echo "  events-logs            - Show events API logs"
 	@echo ""
 	@echo "$(YELLOW)🛠️  Utilities:$(NC)"
+	@echo "  debug-env    - Show environment variables and .env contents"
+	@echo "  debug-env-simple - Simple debug of environment variables (no setup)"
 	@echo "  set-zone-id  - Set Zone ID in terraform.tfvars (legacy, use cf-set-token instead)"
 	@echo "  shell-env    - Show shell environment setup instructions"
 	@echo "  help         - Show this help message"
