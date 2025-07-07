@@ -51,6 +51,12 @@ variable "cloudflare_zone_id" {
   default     = null
 }
 
+variable "cloudflare_zone_name" {
+  description = "Cloudflare zone name (domain)"
+  type        = string
+  default     = "otaku.lt"
+}
+
 variable "domain_name" {
   description = "Domain name for the website"
   type        = string

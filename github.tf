@@ -46,15 +46,52 @@ resource "github_repository" "otaku_lt_sdk" {
   topics = ["terraform", "infrastructure", "github", "iac"]
 }
 
-# GitHub repository secrets for Cloudflare deployment
-resource "github_actions_secret" "cloudflare_api_token" {
-  repository      = github_repository.otaku_lt.name
+# Organization-level secrets for Cloudflare deployment
+# These secrets will be available to all repositories in the organization
+# Note: Requires GitHub token with admin:org scope
+resource "github_actions_organization_secret" "cloudflare_api_token" {
   secret_name     = "CLOUDFLARE_API_TOKEN"
   plaintext_value = var.cloudflare_api_token
+  visibility      = "all"
+  
+  # Only create if we have the necessary permissions
+  count = var.cloudflare_api_token != null ? 1 : 0
 }
 
-resource "github_actions_secret" "cloudflare_account_id" {
-  repository      = github_repository.otaku_lt.name
+resource "github_actions_organization_secret" "cloudflare_account_id" {
   secret_name     = "CLOUDFLARE_ACCOUNT_ID"
   plaintext_value = var.cloudflare_account_id
+  visibility      = "all"
+  
+  count = var.cloudflare_account_id != null ? 1 : 0
 }
+
+resource "github_actions_organization_secret" "cloudflare_zone_id" {
+  secret_name     = "CLOUDFLARE_ZONE_ID"
+  plaintext_value = var.cloudflare_zone_id
+  visibility      = "all"
+  
+  count = var.cloudflare_zone_id != null ? 1 : 0
+}
+
+resource "github_actions_organization_secret" "cloudflare_zone_name" {
+  secret_name     = "CLOUDFLARE_ZONE_NAME"
+  plaintext_value = var.cloudflare_zone_name
+  visibility      = "all"
+  
+  count = var.cloudflare_zone_name != null ? 1 : 0
+}
+
+# Optional: Repository-level secrets for specific overrides (if needed)
+# Uncomment if you need different tokens for different repos
+# resource "github_actions_secret" "cloudflare_api_token_otaku_lt" {
+#   repository      = github_repository.otaku_lt.name
+#   secret_name     = "CLOUDFLARE_API_TOKEN"
+#   plaintext_value = var.cloudflare_api_token
+# }
+
+# resource "github_actions_secret" "cloudflare_account_id_otaku_lt" {
+#   repository      = github_repository.otaku_lt.name
+#   secret_name     = "CLOUDFLARE_ACCOUNT_ID"
+#   plaintext_value = var.cloudflare_account_id
+# }
