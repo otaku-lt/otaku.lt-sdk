@@ -44,15 +44,19 @@ check-auth:
 # Check Cloudflare authentication
 check-cf-auth:
 	@echo "$(YELLOW)🌤️  Checking Cloudflare authentication...$(NC)"
-	@if command -v wrangler >/dev/null 2>&1; then \
-		wrangler whoami >/dev/null 2>&1 || { echo "$(RED)❌ Not authenticated with Wrangler CLI$(NC)"; echo "   Run: wrangler login"; exit 1; }; \
-		echo "$(GREEN)✅ Cloudflare authentication verified (wrangler)$(NC)"; \
+	@if [ -f .env ]; then \
+		. ./.env && [ -n "$$CLOUDFLARE_API_TOKEN" ] && echo "$(GREEN)✅ Cloudflare API token found in .env$(NC)" || { \
+			echo "$(RED)❌ CLOUDFLARE_API_TOKEN not found in .env$(NC)"; \
+			echo "   Run: make cf-set-token TOKEN=your_api_token"; \
+			echo "   Get token from: https://dash.cloudflare.com/profile/api-tokens"; \
+			exit 1; \
+		}; \
 	elif [ -n "$$CLOUDFLARE_API_TOKEN" ]; then \
 		echo "$(GREEN)✅ Cloudflare API token found (env var)$(NC)"; \
 	else \
 		echo "$(RED)❌ Cloudflare authentication required$(NC)"; \
-		echo "   Option 1: wrangler login"; \
-		echo "   Option 2: export CLOUDFLARE_API_TOKEN=\"your_token\""; \
+		echo "   Run: make cf-set-token TOKEN=your_api_token"; \
+		echo "   Get token from: https://dash.cloudflare.com/profile/api-tokens"; \
 		exit 1; \
 	fi
 
@@ -81,7 +85,7 @@ plan: setup
 	@echo "$(YELLOW)📋 Running Terraform plan...$(NC)"
 	@if [ -f .env ]; then \
 		. ./.env && export GITHUB_TOKEN="$$(gh auth token)" && export GITHUB_OWNER="otaku-lt" && \
-			export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_OAUTH_TOKEN" && \
+			export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_API_TOKEN" && \
 			export TF_VAR_cloudflare_account_id="$$CLOUDFLARE_ACCOUNT_ID" && \
 			export TF_VAR_cloudflare_zone_id="$$CLOUDFLARE_ZONE_ID" && \
 			export TF_VAR_domain_name="$$DOMAIN_NAME" && \
@@ -89,7 +93,7 @@ plan: setup
 			terraform plan; \
 	else \
 		echo "$(RED)❌ .env file not found$(NC)"; \
-		echo "$(YELLOW)Run 'make cf-extract' first to extract credentials$(NC)"; \
+		echo "$(YELLOW)Run 'make cf-set-token TOKEN=xyz' first to set up credentials$(NC)"; \
 		exit 1; \
 	fi
 
@@ -98,7 +102,7 @@ apply: setup
 	@echo "$(YELLOW)🚀 Applying Terraform configuration...$(NC)"
 	@if [ -f .env ]; then \
 		. ./.env && export GITHUB_TOKEN="$$(gh auth token)" && export GITHUB_OWNER="otaku-lt" && \
-			export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_OAUTH_TOKEN" && \
+			export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_API_TOKEN" && \
 			export TF_VAR_cloudflare_account_id="$$CLOUDFLARE_ACCOUNT_ID" && \
 			export TF_VAR_cloudflare_zone_id="$$CLOUDFLARE_ZONE_ID" && \
 			export TF_VAR_domain_name="$$DOMAIN_NAME" && \
@@ -106,7 +110,7 @@ apply: setup
 			terraform apply; \
 	else \
 		echo "$(RED)❌ .env file not found$(NC)"; \
-		echo "$(YELLOW)Run 'make cf-extract' first to extract credentials$(NC)"; \
+		echo "$(YELLOW)Run 'make cf-set-token TOKEN=xyz' first to set up credentials$(NC)"; \
 		exit 1; \
 	fi
 
@@ -134,21 +138,20 @@ show: setup
 # Clean terraform cache and temporary files
 clean:
 	@echo "$(YELLOW)🧹 Cleaning Terraform cache...$(NC)"
-	@rm -rf .terraform/
-	@rm -f .terraform.lock.hcl
-	@rm -f terraform.tfstate.backup
-	@echo "$(GREEN)✅ Cache cleaned$(NC)"
+	rm -rf .terraform
+	rm -f .terraform.lock.hcl
+	rm -f terraform.tfstate.backup
 
 # Generate shell environment setup
 shell-env:
 	@echo "$(YELLOW)🐚 Shell environment setup:$(NC)"
 	@echo ""
 	@echo "GitHub authentication is handled automatically by 'gh' CLI."
-	@echo "Cloudflare authentication is handled automatically by 'wrangler' CLI."
+	@echo "Cloudflare authentication uses API tokens from dashboard."
 	@echo ""
 	@echo "Make sure you're authenticated with:"
 	@echo "  gh auth login"
-	@echo "  wrangler login"
+	@echo "  make cf-set-token TOKEN=your_api_token"
 
 # Helper to set Zone ID in terraform.tfvars
 set-zone-id:
@@ -177,7 +180,72 @@ set-zone-id:
 	@echo "$(BLUE)💡 Zone ID set to: $(ZONE_ID)$(NC)"
 	@echo "$(BLUE)🚀 Ready to run: make plan$(NC)"
 
-# Show help
+# Events API specific commands
+.PHONY: events-config events-migrate events-migrate-dev events-deploy events-deploy-dev events-dev events-logs
+
+# Show events API infrastructure configuration
+events-config:
+	@echo "$(YELLOW)📊 Events API Infrastructure:$(NC)"
+	@terraform output events_api_wrangler_config
+
+# Apply database migrations to production
+events-migrate:
+	@echo "$(YELLOW)🔄 Applying migrations to production database...$(NC)"
+	@if [ -d "../otaku.lt-api-events" ] && [ -f "../otaku.lt-api-events/migrations/0001_initial.sql" ]; then \
+		cd ../otaku.lt-api-events && wrangler d1 execute otaku-events-db --file=migrations/0001_initial.sql; \
+		echo "$(GREEN)✅ Production migrations applied$(NC)"; \
+	else \
+		echo "$(RED)❌ Migration files not found. Expected: ../otaku.lt-api-events/migrations/0001_initial.sql$(NC)"; \
+	fi
+
+# Apply database migrations to development
+events-migrate-dev:
+	@echo "$(YELLOW)🔄 Applying migrations to development database...$(NC)"
+	@if [ -d "../otaku.lt-api-events" ] && [ -f "../otaku.lt-api-events/migrations/0001_initial.sql" ]; then \
+		cd ../otaku.lt-api-events && wrangler d1 execute otaku-events-db-dev --file=migrations/0001_initial.sql; \
+		echo "$(GREEN)✅ Development migrations applied$(NC)"; \
+	else \
+		echo "$(RED)❌ Migration files not found. Expected: ../otaku.lt-api-events/migrations/0001_initial.sql$(NC)"; \
+	fi
+
+# Deploy events API to production
+events-deploy:
+	@echo "$(YELLOW)🚀 Deploying events API to production...$(NC)"
+	@if [ -d "../otaku.lt-api-events" ]; then \
+		cd ../otaku.lt-api-events && npm run deploy:prod; \
+		echo "$(GREEN)✅ Events API deployed to production$(NC)"; \
+	else \
+		echo "$(RED)❌ Events API directory not found: ../otaku.lt-api-events$(NC)"; \
+	fi
+
+# Deploy events API to development
+events-deploy-dev:
+	@echo "$(YELLOW)🚀 Deploying events API to development...$(NC)"
+	@if [ -d "../otaku.lt-api-events" ]; then \
+		cd ../otaku.lt-api-events && npm run deploy:dev; \
+		echo "$(GREEN)✅ Events API deployed to development$(NC)"; \
+	else \
+		echo "$(RED)❌ Events API directory not found: ../otaku.lt-api-events$(NC)"; \
+	fi
+
+# Run events API in development mode
+events-dev:
+	@echo "$(YELLOW)🔧 Starting events API in development mode...$(NC)"
+	@if [ -d "../otaku.lt-api-events" ]; then \
+		cd ../otaku.lt-api-events && npm run dev; \
+	else \
+		echo "$(RED)❌ Events API directory not found: ../otaku.lt-api-events$(NC)"; \
+	fi
+
+# Show events API logs
+events-logs:
+	@echo "$(YELLOW)📋 Showing events API logs...$(NC)"
+	@if [ -d "../otaku.lt-api-events" ]; then \
+		cd ../otaku.lt-api-events && npm run logs; \
+	else \
+		echo "$(RED)❌ Events API directory not found: ../otaku.lt-api-events$(NC)"; \
+	fi
+
 # Show help
 help:
 	@echo "$(GREEN)otaku.lt-sdk Terraform + Cloudflare Workers Project$(NC)"
@@ -206,15 +274,23 @@ help:
 	@echo "  workers-apply          - Apply infrastructure and deploy Workers"
 	@echo "  workers-status         - Show Workers deployment status and logs"
 	@echo ""
+	@echo "$(YELLOW)🎯 Events API Management:$(NC)"
+	@echo "  events-config          - Show wrangler.toml configuration for events API"
+	@echo "  events-migrate         - Apply database migrations to production"
+	@echo "  events-migrate-dev     - Apply database migrations to development"
+	@echo "  events-deploy          - Deploy events API to production"
+	@echo "  events-deploy-dev      - Deploy events API to development"
+	@echo "  events-dev             - Run events API in development mode"
+	@echo "  events-logs            - Show events API logs"
+	@echo ""
 	@echo "$(YELLOW)🛠️  Utilities:$(NC)"
-	@echo "  set-zone-id  - Set Zone ID in terraform.tfvars (legacy, use cf-extract instead)"
+	@echo "  set-zone-id  - Set Zone ID in terraform.tfvars (legacy, use cf-set-token instead)"
 	@echo "  shell-env    - Show shell environment setup instructions"
 	@echo "  help         - Show this help message"
 	@echo ""
 	@echo "$(YELLOW)🚀 Quick Start (Complete Infrastructure):$(NC)"
 	@echo "  gh auth login                    # Authenticate with GitHub"
-	@echo "  wrangler login                   # Authenticate with Cloudflare"
-	@echo "  export CLOUDFLARE_API_TOKEN=xxx  # Set your API token"
+	@echo "  make cf-set-token TOKEN=xyz      # Set Cloudflare API token"
 	@echo "  make apply                       # Deploy everything"
 	@echo ""
 	@echo "$(BLUE)📦 This creates everything automatically:$(NC)"

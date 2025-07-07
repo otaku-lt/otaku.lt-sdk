@@ -22,5 +22,5 @@ provider "github" {
 provider "cloudflare" {
   # Use environment variables for authentication
   # Set: export CLOUDFLARE_API_TOKEN="your_api_token"
-  # Or authenticate with: wrangler login (and set token manually)
+  # Or get from dashboard: https://dash.cloudflare.com/profile/api-tokens
 }

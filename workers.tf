@@ -80,3 +80,22 @@ resource "cloudflare_workers_kv_namespace" "otaku_lt_api_events_rate_limit" {
   account_id = var.cloudflare_account_id
   title      = "otaku-events-rate-limit"
 }
+
+# Development environment resources
+# D1 Database for events storage (development)
+resource "cloudflare_d1_database" "otaku_lt_api_events_db_dev" {
+  account_id = var.cloudflare_account_id
+  name       = "otaku-events-db-dev"
+}
+
+# KV Namespace for caching (development)
+resource "cloudflare_workers_kv_namespace" "otaku_lt_api_events_cache_dev" {
+  account_id = var.cloudflare_account_id
+  title      = "otaku-events-cache-dev"
+}
+
+# KV Namespace for API rate limiting (development)
+resource "cloudflare_workers_kv_namespace" "otaku_lt_api_events_rate_limit_dev" {
+  account_id = var.cloudflare_account_id
+  title      = "otaku-events-rate-limit-dev"
+}

@@ -85,3 +85,55 @@ output "events_api_rate_limit_namespace_id" {
   description = "ID of the KV namespace for rate limiting"
   value       = cloudflare_workers_kv_namespace.otaku_lt_api_events_rate_limit.id
 }
+
+# Development environment outputs
+output "events_api_database_id_dev" {
+  description = "ID of the D1 database for events (development)"
+  value       = cloudflare_d1_database.otaku_lt_api_events_db_dev.id
+}
+
+output "events_api_cache_namespace_id_dev" {
+  description = "ID of the KV namespace for events cache (development)"
+  value       = cloudflare_workers_kv_namespace.otaku_lt_api_events_cache_dev.id
+}
+
+output "events_api_rate_limit_namespace_id_dev" {
+  description = "ID of the KV namespace for rate limiting (development)"
+  value       = cloudflare_workers_kv_namespace.otaku_lt_api_events_rate_limit_dev.id
+}
+
+# Formatted wrangler.toml configuration
+output "events_api_wrangler_config" {
+  description = "Ready-to-use configuration for wrangler.toml"
+  value = <<-EOT
+# Copy this configuration to your wrangler.toml file
+
+# Production environment
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "otaku-events-db"
+database_id = "${cloudflare_d1_database.otaku_lt_api_events_db.id}"
+
+[[env.production.kv_namespaces]]
+binding = "CACHE"
+id = "${cloudflare_workers_kv_namespace.otaku_lt_api_events_cache.id}"
+
+[[env.production.kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "${cloudflare_workers_kv_namespace.otaku_lt_api_events_rate_limit.id}"
+
+# Development environment
+[[env.development.d1_databases]]
+binding = "DB"
+database_name = "otaku-events-db-dev"
+database_id = "${cloudflare_d1_database.otaku_lt_api_events_db_dev.id}"
+
+[[env.development.kv_namespaces]]
+binding = "CACHE"
+id = "${cloudflare_workers_kv_namespace.otaku_lt_api_events_cache_dev.id}"
+
+[[env.development.kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "${cloudflare_workers_kv_namespace.otaku_lt_api_events_rate_limit_dev.id}"
+EOT
+}

@@ -2,10 +2,21 @@
 # This file is included by the main Makefile
 
 # Setup Cloudflare authentication
-cf-setup:
-	@echo "$(YELLOW)🌤️  Setting up Cloudflare authentication...$(NC)"
+cf-setucf-info:
+	@echo "$(YELLOW)🌤️  Cloudflare Account Information:$(NC)"
 	@echo ""
-	@echo "$(RED)⚠️  NOTE: Wrangler OAuth tokens have limited permissions!$(NC)"
+	@if [ -f .env ]; then \
+		echo "$(GREEN)📄 Found .env file with credentials$(NC)"; \
+		. ./.env && echo "$(BLUE)API Token: $${CLOUDFLARE_API_TOKEN:0:10}...$(NC)"; \
+		. ./.env && echo "$(BLUE)Zone ID: $$CLOUDFLARE_ZONE_ID$(NC)"; \
+		. ./.env && echo "$(BLUE)Account ID: $$CLOUDFLARE_ACCOUNT_ID$(NC)"; \
+		echo "$(GREEN)✅ Ready to run terraform!$(NC)"; \
+	else \
+		echo "$(YELLOW)📄 No .env file found$(NC)"; \
+		echo "$(BLUE)💡 Run 'make cf-set-token TOKEN=xyz' to set up credentials$(NC)"; \
+	fiLLOW)🌤️  Setting up Cloudflare authentication...$(NC)"
+	@echo ""
+	@echo "$(RED)⚠️  NOTE: Please use a proper API token from Cloudflare dashboard!$(NC)"
 	@echo "$(YELLOW)For full Terraform functionality, you need a custom API token.$(NC)"
 	@echo ""
 	@echo "$(YELLOW)🔑 Create Custom API Token (Required for Terraform):$(NC)"
@@ -22,57 +33,19 @@ cf-setup:
 	@echo "7. ✅ Create token and copy it"
 	@echo "8. 💾 Save token: make cf-set-token TOKEN=your_token_here"
 
-# Extract Cloudflare credentials from wrangler config to .env file
+# Extract Cloudflare credentials to .env file (deprecated - use cf-set-token instead)
 cf-extract:
-	@echo "$(YELLOW)🔧 Extracting Cloudflare credentials from wrangler config...$(NC)"
+	@echo "$(RED)⚠️  WARNING: cf-extract is deprecated!$(NC)"
+	@echo "$(YELLOW)Please use 'make cf-set-token TOKEN=your_api_token' instead$(NC)"
+	@echo "$(BLUE)Get your API token from: https://dash.cloudflare.com/profile/api-tokens$(NC)"
 	@echo ""
-	@if [ ! -f ~/Library/Preferences/.wrangler/config/default.toml ]; then \
-		echo "$(RED)❌ Wrangler config not found at ~/Library/Preferences/.wrangler/config/default.toml$(NC)"; \
-		echo "$(YELLOW)Run 'wrangler login' first$(NC)"; \
-		exit 1; \
-	fi
-	@if [ ! -f .env ]; then \
-		echo "$(BLUE)📄 Creating .env from template...$(NC)"; \
-		cp .env.example .env; \
-	fi
-	@echo "$(YELLOW)🔑 Extracting OAuth token...$(NC)"
-	@OAUTH_TOKEN=$$(grep -o 'oauth_token = "[^"]*"' ~/Library/Preferences/.wrangler/config/default.toml | cut -d'"' -f2 2>/dev/null); \
-	if [ -n "$$OAUTH_TOKEN" ]; then \
-		if grep -q "^CLOUDFLARE_OAUTH_TOKEN=" .env; then \
-			sed -i '' "s/^CLOUDFLARE_OAUTH_TOKEN=.*/CLOUDFLARE_OAUTH_TOKEN=$$OAUTH_TOKEN/" .env; \
-		else \
-			echo "CLOUDFLARE_OAUTH_TOKEN=$$OAUTH_TOKEN" >> .env; \
-		fi; \
-		echo "$(GREEN)✅ OAuth token extracted and saved to .env$(NC)"; \
-	else \
-		echo "$(RED)❌ Could not extract OAuth token$(NC)"; \
-		exit 1; \
-	fi
-	@echo "$(YELLOW)🌐 Fetching Zone ID for otaku.lt...$(NC)"
-	@if command -v jq >/dev/null 2>&1; then \
-		OAUTH_TOKEN=$$(grep -o 'oauth_token = "[^"]*"' ~/Library/Preferences/.wrangler/config/default.toml | cut -d'"' -f2 2>/dev/null); \
-		ZONE_ID=$$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=otaku.lt" \
-			-H "Authorization: Bearer $$OAUTH_TOKEN" \
-			-H "Content-Type: application/json" | jq -r '.result[0].id // empty' 2>/dev/null); \
-		if [ -n "$$ZONE_ID" ] && [ "$$ZONE_ID" != "null" ]; then \
-			if grep -q "^CLOUDFLARE_ZONE_ID=" .env; then \
-				sed -i '' "s/^CLOUDFLARE_ZONE_ID=.*/CLOUDFLARE_ZONE_ID=$$ZONE_ID/" .env; \
-			else \
-				echo "CLOUDFLARE_ZONE_ID=$$ZONE_ID" >> .env; \
-			fi; \
-			echo "$(GREEN)✅ Zone ID fetched and saved to .env: $$ZONE_ID$(NC)"; \
-		else \
-			echo "$(RED)❌ Could not fetch Zone ID$(NC)"; \
-			exit 1; \
-		fi; \
-	else \
-		echo "$(RED)❌ jq not found - install with: brew install jq$(NC)"; \
-		exit 1; \
-	fi
+	@echo "$(YELLOW)💡 Create a custom API token with these permissions:$(NC)"
+	@echo "  - Zone:Zone:Read"
+	@echo "  - Zone:Zone Settings:Edit"  
+	@echo "  - Zone:DNS:Edit"
+	@echo "  - Account:Cloudflare Workers:Edit"
 	@echo ""
-	@echo "$(GREEN)🎉 Credentials extracted successfully!$(NC)"
-	@echo "$(BLUE)💡 .env file created with OAuth token and Zone ID$(NC)"
-	@echo "$(BLUE)🚀 Ready to run: make plan$(NC)"
+	@exit 1
 
 # Set Cloudflare API token in .env file
 cf-set-token:
@@ -96,11 +69,11 @@ cf-set-token:
 		echo "$(BLUE)📄 Creating .env from template...$(NC)"; \
 		cp .env.example .env; \
 	fi
-	@if grep -q "^CLOUDFLARE_OAUTH_TOKEN=" .env; then \
-		sed -i '' "s/^CLOUDFLARE_OAUTH_TOKEN=.*/CLOUDFLARE_OAUTH_TOKEN=$(TOKEN)/" .env; \
+	@if grep -q "^CLOUDFLARE_API_TOKEN=" .env; then \
+		sed -i '' "s/^CLOUDFLARE_API_TOKEN=.*/CLOUDFLARE_API_TOKEN=$(TOKEN)/" .env; \
 		echo "$(GREEN)✅ Updated API token in .env$(NC)"; \
 	else \
-		echo "CLOUDFLARE_OAUTH_TOKEN=$(TOKEN)" >> .env; \
+		echo "CLOUDFLARE_API_TOKEN=$(TOKEN)" >> .env; \
 		echo "$(GREEN)✅ Added API token to .env$(NC)"; \
 	fi
 	@echo "$(YELLOW)🌐 Fetching Zone ID for otaku.lt with new token...$(NC)"
@@ -138,14 +111,14 @@ cf-import-dns:
 		exit 1; \
 	fi
 	@. ./.env && export GITHUB_TOKEN="$$(gh auth token)" && export GITHUB_OWNER="otaku-lt" && \
-		export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_OAUTH_TOKEN" && \
+		export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_API_TOKEN" && \
 		export TF_VAR_cloudflare_account_id="$$CLOUDFLARE_ACCOUNT_ID" && \
 		export TF_VAR_cloudflare_zone_id="$$CLOUDFLARE_ZONE_ID" && \
 		export TF_VAR_domain_name="$$DOMAIN_NAME" && \
 		export TF_VAR_pages_project_name="$$PAGES_PROJECT_NAME"
 	@echo "$(YELLOW)🔍 Finding existing DNS records...$(NC)"
 	@. ./.env && CNAME_ID=$$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$$CLOUDFLARE_ZONE_ID/dns_records?name=$$DOMAIN_NAME&type=CNAME" \
-		-H "Authorization: Bearer $$CLOUDFLARE_OAUTH_TOKEN" \
+		-H "Authorization: Bearer $$CLOUDFLARE_API_TOKEN" \
 		-H "Content-Type: application/json" | jq -r '.result[0].id // empty' 2>/dev/null); \
 	if [ -n "$$CNAME_ID" ] && [ "$$CNAME_ID" != "null" ]; then \
 		echo "$(GREEN)✅ Found existing CNAME record: $$CNAME_ID$(NC)"; \
@@ -155,7 +128,7 @@ cf-import-dns:
 		echo "$(BLUE)💡 No existing CNAME record found for root domain$(NC)"; \
 	fi
 	@. ./.env && WWW_ID=$$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$$CLOUDFLARE_ZONE_ID/dns_records?name=www.$$DOMAIN_NAME&type=CNAME" \
-		-H "Authorization: Bearer $$CLOUDFLARE_OAUTH_TOKEN" \
+		-H "Authorization: Bearer $$CLOUDFLARE_API_TOKEN" \
 		-H "Content-Type: application/json" | jq -r '.result[0].id // empty' 2>/dev/null); \
 	if [ -n "$$WWW_ID" ] && [ "$$WWW_ID" != "null" ]; then \
 		echo "$(GREEN)✅ Found existing WWW CNAME record: $$WWW_ID$(NC)"; \
@@ -176,7 +149,7 @@ cf-info:
 	@echo ""
 	@if [ -f .env ]; then \
 		echo "$(GREEN)📄 Found .env file with credentials$(NC)"; \
-		. ./.env && echo "$(BLUE)OAuth Token: $${CLOUDFLARE_OAUTH_TOKEN:0:10}...$(NC)"; \
+		. ./.env && echo "$(BLUE)API Token: $${CLOUDFLARE_API_TOKEN:0:10}...$(NC)"; \
 		. ./.env && echo "$(BLUE)Zone ID: $$CLOUDFLARE_ZONE_ID$(NC)"; \
 		. ./.env && echo "$(BLUE)Account ID: $$CLOUDFLARE_ACCOUNT_ID$(NC)"; \
 		echo "$(GREEN)✅ Ready to run terraform!$(NC)"; \
@@ -190,20 +163,22 @@ cf-auto-setup: setup
 	@echo "$(YELLOW)🚀 Auto-configuring Cloudflare credentials and running terraform plan...$(NC)"
 	@echo ""
 	@if [ ! -f .env ]; then \
-		echo "$(YELLOW)💡 No .env file found, extracting credentials...$(NC)"; \
-		$(MAKE) cf-extract; \
+		echo "$(RED)❌ No .env file found$(NC)"; \
+		echo "$(YELLOW)💡 Please run 'make cf-set-token TOKEN=your_api_token' first$(NC)"; \
+		echo "$(BLUE)Get your API token from: https://dash.cloudflare.com/profile/api-tokens$(NC)"; \
+		exit 1; \
 	else \
 		echo "$(GREEN)📄 Found existing .env file$(NC)"; \
 	fi
 	@echo ""
 	@echo "$(YELLOW)📦 Initializing Terraform...$(NC)"
 	@. ./.env && export GITHUB_TOKEN="$$(gh auth token)" && export GITHUB_OWNER="otaku-lt" && \
-		export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_OAUTH_TOKEN" && \
+		export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_API_TOKEN" && \
 		terraform init -upgrade
 	@echo ""
 	@echo "$(YELLOW)📋 Running Terraform plan...$(NC)"
 	@. ./.env && export GITHUB_TOKEN="$$(gh auth token)" && export GITHUB_OWNER="otaku-lt" && \
-		export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_OAUTH_TOKEN" && \
+		export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_API_TOKEN" && \
 		export TF_VAR_cloudflare_account_id="$$CLOUDFLARE_ACCOUNT_ID" && \
 		export TF_VAR_cloudflare_zone_id="$$CLOUDFLARE_ZONE_ID" && \
 		export TF_VAR_domain_name="$$DOMAIN_NAME" && \
