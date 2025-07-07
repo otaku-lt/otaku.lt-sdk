@@ -14,7 +14,7 @@ NC := \033[0m # No Color
 include cloudflare.mk
 include workers.mk
 
-.PHONY: setup check-deps check-auth check-cf-auth env plan apply fmt validate clean set-zone-id shell-env github-secrets help github-secrets
+.PHONY: setup check-deps check-auth check-cf-auth env plan apply fmt validate clean set-zone-id shell-env help
 
 # Default target: setup environment
 setup: check-deps check-auth check-cf-auth env
@@ -177,84 +177,7 @@ set-zone-id:
 	@echo "$(BLUE)💡 Zone ID set to: $(ZONE_ID)$(NC)"
 	@echo "$(BLUE)🚀 Ready to run: make plan$(NC)"
 
-# Setup GitHub Actions secrets for CI/CD (Organization-Level)
-github-org-secrets: setup
-	@echo "$(YELLOW)🔐 Setting up Organization-Level GitHub Actions secrets...$(NC)"
-	@echo ""
-	@if [ ! -f .env ]; then \
-		echo "$(RED)❌ .env file not found$(NC)"; \
-		echo "$(YELLOW)Run 'make cf-extract' first to extract credentials$(NC)"; \
-		exit 1; \
-	fi
-	@echo "$(BLUE)💡 This will configure GitHub ORGANIZATION secrets for CI/CD$(NC)"
-	@echo "$(GREEN)✨ Organization secrets are available to ALL repositories in otaku-lt$(NC)"
-	@echo "$(YELLOW)Secrets to be created:$(NC)"
-	@echo "  - CLOUDFLARE_API_TOKEN"
-	@echo "  - CLOUDFLARE_ACCOUNT_ID"
-	@echo "  - CLOUDFLARE_ZONE_ID"
-	@echo "  - CLOUDFLARE_ZONE_NAME"
-	@echo ""
-	@echo "$(BLUE)🔑 Checking GitHub permissions...$(NC)"
-	@gh api orgs/otaku-lt/actions/secrets >/dev/null 2>&1 || { \
-		echo "$(RED)❌ Insufficient GitHub permissions for organization secrets$(NC)"; \
-		echo "$(YELLOW)🔧 Fix: Run 'gh auth refresh --scopes admin:org'$(NC)"; \
-		echo "$(BLUE)💡 Alternative: Use 'make github-secrets' for repository-level secrets$(NC)"; \
-		exit 1; \
-	}
-	@echo "$(GREEN)✅ GitHub permissions verified$(NC)"
-	@. ./.env && export GITHUB_TOKEN="$$(gh auth token)" && export GITHUB_OWNER="otaku-lt" && \
-		export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_OAUTH_TOKEN" && \
-		export TF_VAR_cloudflare_api_token="$$CLOUDFLARE_OAUTH_TOKEN" && \
-		export TF_VAR_cloudflare_account_id="$$CLOUDFLARE_ACCOUNT_ID" && \
-		export TF_VAR_cloudflare_zone_id="$$CLOUDFLARE_ZONE_ID" && \
-		export TF_VAR_cloudflare_zone_name="$$DOMAIN_NAME" && \
-		export TF_VAR_domain_name="$$DOMAIN_NAME" && \
-		export TF_VAR_pages_project_name="$$PAGES_PROJECT_NAME" && \
-		terraform apply -target=github_actions_organization_secret.cloudflare_api_token \
-			-target=github_actions_organization_secret.cloudflare_account_id \
-			-target=github_actions_organization_secret.cloudflare_zone_id \
-			-target=github_actions_organization_secret.cloudflare_zone_name
-	@echo ""
-	@echo "$(GREEN)🎉 Organization-Level GitHub Actions secrets configured!$(NC)"
-	@echo "$(BLUE)🌟 All repositories in the otaku-lt organization can now use these secrets$(NC)"
-	@echo "$(BLUE)🚀 Ready to create new Workers/API repositories with automatic CI/CD$(NC)"
-
-# Show organization secrets status
-github-org-status:
-	@echo "$(YELLOW)📊 Organization-Level Secrets Status$(NC)"
-	@echo ""
-	@echo "$(BLUE)💡 Checking GitHub organization secrets...$(NC)"
-	@gh api orgs/otaku-lt/actions/secrets --jq '.secrets[] | select(.name | startswith("CLOUDFLARE_")) | "✅ " + .name + " (updated: " + .updated_at + ")"' 2>/dev/null || echo "$(YELLOW)⚠️  No organization secrets found or permission denied$(NC)"
-	@echo ""
-	@echo "$(YELLOW)🔧 To set up organization secrets:$(NC)"
-	@echo "  make github-org-secrets"
-
-# Setup GitHub Actions secrets for CI/CD (Repository-Level - Legacy)
-github-secrets: setup
-	@echo "$(YELLOW)🔐 Setting up Repository-Level GitHub Actions secrets...$(NC)"
-	@echo "$(BLUE)💡 For organization-wide secrets, use 'make github-org-secrets' instead$(NC)"
-	@echo ""
-	@if [ ! -f .env ]; then \
-		echo "$(RED)❌ .env file not found$(NC)"; \
-		echo "$(YELLOW)Run 'make cf-extract' first to extract credentials$(NC)"; \
-		exit 1; \
-	fi
-	@echo "$(YELLOW)Secrets to be created (repository-level):$(NC)"
-	@echo "  - CLOUDFLARE_API_TOKEN"
-	@echo "  - CLOUDFLARE_ACCOUNT_ID"
-	@echo ""
-	@. ./.env && export GITHUB_TOKEN="$$(gh auth token)" && export GITHUB_OWNER="otaku-lt" && \
-		export CLOUDFLARE_API_TOKEN="$$CLOUDFLARE_OAUTH_TOKEN" && \
-		export TF_VAR_cloudflare_api_token="$$CLOUDFLARE_OAUTH_TOKEN" && \
-		export TF_VAR_cloudflare_account_id="$$CLOUDFLARE_ACCOUNT_ID" && \
-		export TF_VAR_cloudflare_zone_id="$$CLOUDFLARE_ZONE_ID" && \
-		export TF_VAR_domain_name="$$DOMAIN_NAME" && \
-		export TF_VAR_pages_project_name="$$PAGES_PROJECT_NAME" && \
-		terraform apply -target=github_actions_secret.cloudflare_api_token_otaku_lt -target=github_actions_secret.cloudflare_account_id_otaku_lt
-	@echo ""
-	@echo "$(GREEN)🎉 Repository-Level GitHub Actions secrets configured!$(NC)"
-	@echo "$(BLUE)🚀 This repository's CI/CD pipeline is now ready$(NC)"
-
+# Show help
 # Show help
 help:
 	@echo "$(GREEN)otaku.lt-sdk Terraform + Cloudflare Workers Project$(NC)"
@@ -262,16 +185,9 @@ help:
 	@echo "$(YELLOW)🏗️  Infrastructure Management:$(NC)"
 	@echo "  setup        - Set up environment and check dependencies (default)"
 	@echo "  cf-setup     - Show Cloudflare API token setup instructions"
-	@echo "  cf-extract   - Extract Cloudflare credentials from wrangler to .env"
 	@echo "  cf-set-token - Set custom API token in .env (usage: make cf-set-token TOKEN=xyz)"
-	@echo "  cf-import-dns - Import existing DNS records into Terraform state"
-	@echo "  cf-connect-github - Show instructions to connect Pages to GitHub repo (legacy)"
-	@echo "  cf-check-github - Check GitHub App installation status (legacy)"
 	@echo "  cf-info      - Show Cloudflare account information from .env"
 	@echo "  cf-auto-setup - Extract credentials and run terraform plan"
-	@echo "  github-org-secrets - Setup Organization-Level GitHub Actions secrets (RECOMMENDED)"
-	@echo "  github-secrets - Setup Repository-Level GitHub Actions secrets (legacy)"
-	@echo "  github-org-status - Show organization secrets status"
 	@echo "  init         - Initialize Terraform"
 	@echo "  plan         - Run terraform plan (uses .env for credentials)"
 	@echo "  apply        - Run terraform apply (uses .env for credentials)"
@@ -295,13 +211,19 @@ help:
 	@echo "  shell-env    - Show shell environment setup instructions"
 	@echo "  help         - Show this help message"
 	@echo ""
-	@echo "$(YELLOW)🚀 Quick Start (Cloudflare Workers):$(NC)"
+	@echo "$(YELLOW)🚀 Quick Start (Complete Infrastructure):$(NC)"
 	@echo "  gh auth login                    # Authenticate with GitHub"
 	@echo "  wrangler login                   # Authenticate with Cloudflare"
-	@echo "  make cf-extract                  # Extract credentials to .env"
-	@echo "  make workers-setup               # Setup infrastructure"
-	@echo "  make github-org-secrets          # Setup Organization-Level GitHub Actions secrets"
-	@echo "  make workers-apply               # Deploy everything"
+	@echo "  export CLOUDFLARE_API_TOKEN=xxx  # Set your API token"
+	@echo "  make apply                       # Deploy everything"
+	@echo ""
+	@echo "$(BLUE)📦 This creates everything automatically:$(NC)"
+	@echo "  • Organization-level GitHub secrets"
+	@echo "  • otaku-events-api repository with security features"
+	@echo "  • D1 database for events storage"
+	@echo "  • KV namespaces for caching and rate limiting"
+	@echo "  • DNS record for api.otaku.lt"
+	@echo "  • Branch protection rules"
 	@echo ""
 	@echo "$(YELLOW)🏗️  Infrastructure Only:$(NC)"
 	@echo "  make cf-set-token TOKEN=xyz      # Set your custom API token"

@@ -46,6 +46,76 @@ resource "github_repository" "otaku_lt_sdk" {
   topics = ["terraform", "infrastructure", "github", "iac"]
 }
 
+# Events API repository - Python Workers
+resource "github_repository" "otaku_events_api" {
+  name        = "otaku-events-api"
+  description = "Python-based events API using Cloudflare Workers and FastAPI"
+
+  visibility = "public"
+
+  # Repository settings
+  has_issues    = true
+  has_projects  = false
+  has_wiki      = false
+  has_downloads = false
+
+  # Security and analysis
+  vulnerability_alerts = true
+  
+  # Enable advanced security features
+  security_and_analysis {
+    advanced_security {
+      status = "enabled"
+    }
+    secret_scanning {
+      status = "enabled"
+    }
+    secret_scanning_push_protection {
+      status = "enabled"
+    }
+  }
+
+  # Auto-init with README
+  auto_init = true
+
+  # Topics/tags for the repository
+  topics = ["python", "fastapi", "cloudflare-workers", "api", "events", "serverless", "pyodide"]
+}
+
+# Set default branch for events API repository
+resource "github_branch_default" "otaku_events_api_default" {
+  repository = github_repository.otaku_events_api.name
+  branch     = "main"
+}
+
+# Branch protection for events API repository
+resource "github_branch_protection" "otaku_events_api_main" {
+  repository_id = github_repository.otaku_events_api.name
+  pattern       = "main"
+
+  # Require pull request reviews
+  required_pull_request_reviews {
+    dismiss_stale_reviews           = true
+    require_code_owner_reviews      = false
+    required_approving_review_count = 1
+  }
+
+  # Require status checks
+  required_status_checks {
+    strict = true
+    contexts = [
+      "build-and-test",
+      "security-scan"
+    ]
+  }
+
+  # Additional protections
+  enforce_admins         = false
+  allows_deletions       = false
+  allows_force_pushes    = false
+  require_signed_commits = false
+}
+
 # Organization-level secrets for Cloudflare deployment
 # These secrets will be available to all repositories in the organization
 # Note: Requires GitHub token with admin:org scope

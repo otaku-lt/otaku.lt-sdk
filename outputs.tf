@@ -29,6 +29,22 @@ output "otaku_lt_sdk_repository_ssh_clone_url" {
   value       = github_repository.otaku_lt_sdk.ssh_clone_url
 }
 
+# Events API repository outputs
+output "otaku_events_api_repository_url" {
+  description = "The URL of the otaku-events-api repository"
+  value       = github_repository.otaku_events_api.html_url
+}
+
+output "otaku_events_api_repository_clone_url" {
+  description = "The clone URL of the otaku-events-api repository"
+  value       = github_repository.otaku_events_api.http_clone_url
+}
+
+output "otaku_events_api_repository_ssh_clone_url" {
+  description = "The SSH clone URL of the otaku-events-api repository"
+  value       = github_repository.otaku_events_api.ssh_clone_url
+}
+
 # Cloudflare Pages outputs (DEPRECATED - migrated to Workers)
 # output "pages_project_id" {
 #   description = "ID of the Cloudflare Pages project"
@@ -53,6 +69,27 @@ output "otaku_lt_sdk_repository_ssh_clone_url" {
 output "website_url" {
   description = "URL of the deployed website"
   value       = "https://${var.domain_name}"
+}
+
+# Events API infrastructure outputs
+output "events_api_url" {
+  description = "URL of the events API"
+  value       = "https://api.${var.domain_name}"
+}
+
+output "d1_database_id" {
+  description = "ID of the D1 database for events"
+  value       = cloudflare_d1_database.otaku_events_db.id
+}
+
+output "kv_cache_namespace_id" {
+  description = "ID of the KV namespace for caching"
+  value       = cloudflare_workers_kv_namespace.otaku_events_cache.id
+}
+
+output "kv_rate_limit_namespace_id" {
+  description = "ID of the KV namespace for rate limiting"
+  value       = cloudflare_workers_kv_namespace.otaku_events_rate_limit.id
 }
 
 # output "pages_dev_url" {
