@@ -49,14 +49,14 @@ resource "cloudflare_record" "otaku_lt_yurucamp" {
   comment = "Managed by Terraform - YuruCamp subdomain (yurucamp.otaku.lt)"
 }
 
-# CNAME record for kornihaband subdomain
-resource "cloudflare_record" "otaku_lt_kornihaband" {
+# CNAME record for korniha subdomain
+resource "cloudflare_record" "otaku_lt_korniha" {
   zone_id = var.cloudflare_zone_id
-  name    = "kornihaband"
+  name    = "korniha"
   content = var.domain_name  # Using content instead of value to fix deprecation warning
   type    = "CNAME"
   ttl     = 1 # Auto TTL
   proxied = true
 
-  comment = "Managed by Terraform - Korniha Band subdomain (kornihaband.otaku.lt)"
+  comment = "Managed by Terraform - Korniha subdomain (korniha.otaku.lt)"
 }
