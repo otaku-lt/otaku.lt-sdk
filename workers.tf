@@ -3,30 +3,6 @@
 # Uses Workers static assets without custom script
 # Custom domains are managed via wrangler.toml routes
 
-# DNS record for the main domain (A record pointing to Cloudflare proxy)
-resource "cloudflare_record" "otaku_lt_root" {
-  zone_id = var.cloudflare_zone_id
-  name    = "@"
-  content = "192.0.2.1"  # Placeholder IP, will be handled by Worker
-  type    = "A"
-  ttl     = 1 # Auto TTL
-  proxied = true
-
-  comment = "Managed by Terraform - Points to Cloudflare Worker"
-}
-
-# DNS record for www subdomain
-resource "cloudflare_record" "otaku_lt_www" {
-  zone_id = var.cloudflare_zone_id
-  name    = "www"
-  content = "192.0.2.1"  # Placeholder IP, will be handled by Worker
-  type    = "A"
-  ttl     = 1 # Auto TTL
-  proxied = true
-
-  comment = "Managed by Terraform - WWW subdomain for Worker"
-}
-
 # Security and performance settings (only modifiable settings)
 resource "cloudflare_zone_settings_override" "otaku_lt_settings" {
   zone_id = var.cloudflare_zone_id
@@ -49,18 +25,6 @@ resource "cloudflare_zone_settings_override" "otaku_lt_settings" {
     # Development mode (turn off for production)
     development_mode = "off"
   }
-}
-
-# DNS record for events API subdomain
-resource "cloudflare_record" "otaku_lt_api_events" {
-  zone_id = var.cloudflare_zone_id
-  name    = "api"
-  content = "192.0.2.1"  # Placeholder IP, will be handled by Worker
-  type    = "A"
-  ttl     = 1 # Auto TTL
-  proxied = true
-
-  comment = "Managed by Terraform - Events API subdomain (api.otaku.lt)"
 }
 
 # D1 Database for events storage
